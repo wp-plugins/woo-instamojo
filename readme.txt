@@ -48,9 +48,9 @@ Once the plugin is installed and activated, you will be able to access a new men
 8. Save the Instamojo settings page in WooCommerce.
 9. If you haven't already, add some products in WooCommerce.
 
-  If your website's URL is "http://www.example.com/", you need to paste the following into the "Custom redirection URL":
+  If your website's URL is "http://www.example.com/", you need to paste the following into the **"Custom redirection URL"**:
 
-  "http://www.example.com/?wc-api=wc_instamojo"
+  **"http://www.example.com/?wc-api=wc_instamojo"**
 
 == Changelog ==
 

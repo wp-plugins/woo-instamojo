@@ -16,6 +16,15 @@ require_once(dirname(__FILE__) . '/instamojo-api.php');
 add_action('plugins_loaded', 'woocommerce_instamojo_init', 0);
 define('instamojo_imgdir', WP_PLUGIN_URL . "/" . plugin_basename(dirname(__FILE__)) . '/assets/img/');
 
+function url_handler($url){
+    if(strpos($url, '?') === FALSE){
+        return $url . "?";
+    }
+    else{
+        return $url . '&';
+    }
+}
+
 # add the settings link at plugin actions
 add_filter('plugin_action_links_'.plugin_basename(__FILE__),'instamojo_settings_links');
 function instamojo_settings_links($links)
@@ -101,7 +110,7 @@ function woocommerce_instamojo_init(){
             $checkout_url = site_url();
             $this->form_fields = array(
                 'enabled' => array(
-                    'title' => __( 'Enable/Disable', 'woocommerce' ),
+                    'title' => __( 'Enable/Disable', 'woocommerce'),
                     'type' => 'checkbox',
                     'label' => __( 'Enable Instamojo Payment', 'woocommerce' ),
                     'default' => 'yes'
@@ -117,6 +126,7 @@ function woocommerce_instamojo_init(){
                     'title' => __('Instamojo Payment Link*','instamojo' ),
                     'type' => 'text',
                     'default' => '',
+                    'placeholder' => _x('https://www.instamojo.com/<username>/<slug>/', 'placeholder', 'woocommerce')
                 ),
                 'api_key' =>array(
                     'title' => __('Private Api Key*','instamojo'),
@@ -189,7 +199,7 @@ function woocommerce_instamojo_init(){
             $data_arr[$custom_field1] = $order_id;
             ksort($data_arr, SORT_STRING | SORT_FLAG_CASE);
             $str = hash_hmac("sha1", implode("|", $data_arr), $this->private_salt);
-            $link= $this->payment_link . "?intent=buy&";
+            $link= url_handler($this->payment_link) . "intent=buy&";
             $link.="data_readonly=data_email&data_readonly=data_amount&data_readonly=data_phone&data_readonly=data_name&data_readonly={$custom_field}&data_hidden={$custom_field}";
             $link.="&data_amount=$amount&data_name=$delivery_name&data_email=$billing_email&data_phone=$billing_tel&{$custom_field}=$order_id&data_sign=$str";
 
