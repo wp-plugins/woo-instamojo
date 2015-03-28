@@ -183,7 +183,7 @@ function woocommerce_instamojo_init(){
             global $woocommerce;
             $order = new WC_Order($order_id);
 
-            $amount = $this->get_order_total();
+            $amount = $woocommerce->cart->total;
             $billing_email =  $order->billing_email;
             $delivery_name = $order->billing_first_name ." ".$order->billing_last_name;
             $billing_tel = trim($order->billing_phone, "+");
