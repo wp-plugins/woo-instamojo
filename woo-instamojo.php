@@ -183,7 +183,7 @@ function woocommerce_instamojo_init(){
             global $woocommerce;
             $order = new WC_Order($order_id);
 
-            $amount = $this->get_order_total();
+            $amount = $woocommerce->cart->total;
             $billing_email =  $order->billing_email;
             $delivery_name = $order->billing_first_name ." ".$order->billing_last_name;
             $billing_tel = trim($order->billing_phone, "+");
@@ -203,7 +203,9 @@ function woocommerce_instamojo_init(){
             $link.="data_readonly=data_email&data_readonly=data_amount&data_readonly=data_phone&data_readonly=data_name&data_readonly={$custom_field}&data_hidden={$custom_field}";
             $link.="&data_amount=$amount&data_name=$delivery_name&data_email=$billing_email&data_phone=$billing_tel&{$custom_field}=$order_id&data_sign=$str";
 
-            $_SESSION["order_id"] = $order_id;            return array(
+            $_SESSION["order_id"] = $order_id;
+
+            return array(
                 'result' => 'success', 
                 'redirect' => $link
             );
