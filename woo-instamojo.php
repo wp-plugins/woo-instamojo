@@ -203,9 +203,7 @@ function woocommerce_instamojo_init(){
             $link.="data_readonly=data_email&data_readonly=data_amount&data_readonly=data_phone&data_readonly=data_name&data_readonly={$custom_field}&data_hidden={$custom_field}";
             $link.="&data_amount=$amount&data_name=$delivery_name&data_email=$billing_email&data_phone=$billing_tel&{$custom_field}=$order_id&data_sign=$str";
 
-            $_SESSION["order_id"] = $order_id;
-
-            return array(
+            $_SESSION["order_id"] = $order_id;            return array(
                 'result' => 'success', 
                 'redirect' => $link
             );
@@ -266,7 +264,8 @@ function woocommerce_instamojo_init(){
             if(substr($redirect_url, -1) != '/'){
                 $redirect_url .= '/';
             }
-            $redirect_url = add_query_arg(['msg' => urlencode($msg['msg']), 'class' => urlencode($msg['class'])], $this->redirect_url);
+
+            $redirect_url = add_query_arg(array('msg' => urlencode($msg['msg']), 'class' => urlencode($msg['class'])), $this->redirect_url);
             wp_redirect($redirect_url);
             exit;
         }
