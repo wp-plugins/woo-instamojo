@@ -264,7 +264,8 @@ function woocommerce_instamojo_init(){
             if(substr($redirect_url, -1) != '/'){
                 $redirect_url .= '/';
             }
-            $redirect_url = add_query_arg(['msg' => urlencode($msg['msg']), 'class' => urlencode($msg['class'])], $this->redirect_url);
+
+            $redirect_url = add_query_arg(array('msg' => urlencode($msg['msg']), 'class' => urlencode($msg['class'])), $this->redirect_url);
             wp_redirect($redirect_url);
             exit;
         }
