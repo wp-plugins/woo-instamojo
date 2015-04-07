@@ -54,5 +54,5 @@ Once the plugin is installed and activated, you will be able to access a new men
 
 == Changelog ==
 
-= 0.1.0 =
+= 0.0.1 =
 * Initial release.
