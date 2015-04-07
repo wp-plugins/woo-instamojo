@@ -3,7 +3,7 @@
 Plugin Name: WooCommerce - Instamojo
 Plugin URI: http://www.instamojo.com
 Description: Instamojo Payment Gateway for WooCommerce. Instamojo lets you collect payments instantly.
-Version: 0.0.1
+Version: 0.0.2
 Author: Instamojo
 Email: support@instamojo.com
 Author URI: http://www.instamojo.com/
