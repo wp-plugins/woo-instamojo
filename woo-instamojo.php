@@ -186,7 +186,7 @@ function woocommerce_instamojo_init(){
             $amount = $woocommerce->cart->total;
 
             $billing_email =  substr($order->billing_email, 0, 75);
-            $delivery_name = substr(($order->billing_first_name ." ".$order->billing_last_name), 0, 20);
+            $delivery_name = substr(trim($order->billing_first_name ." ".$order->billing_last_name), 0, 20);
             $billing_tel = substr(trim($order->billing_phone, "+"), 0, 20);
 
             $data_arr = Array();
