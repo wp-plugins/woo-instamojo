@@ -3,7 +3,7 @@
 Plugin Name: WooCommerce - Instamojo
 Plugin URI: http://www.instamojo.com
 Description: Instamojo Payment Gateway for WooCommerce. Instamojo lets you collect payments instantly.
-Version: 0.0.2
+Version: 0.0.3
 Author: Instamojo
 Email: support@instamojo.com
 Author URI: http://www.instamojo.com/
@@ -80,13 +80,13 @@ function woocommerce_instamojo_init(){
             $this->init_form_fields();
             $this->init_settings();           
             $this->title            = $this->settings['title'];
-            $this->liveurl          = 'https://www.instamojo.com/api/1.1/';
             $this->api_key          = $this->settings['api_key'];
             $this->auth_token       = $this->settings['auth_token'];
             $this->private_salt     = $this->settings['private_salt'];
             $this->custom_field     = $this->settings['custom_field'];
             $this->payment_link     = $this->settings['payment_link'];
             $this->redirect_url     = $this->settings['thank_you_url'];
+            $this->thank_you_msg    = $this->settings['thank_you_msg'];
             //$this->description      = $this->settings['description'];
 
             $this->msg['message']   = "";
@@ -161,6 +161,13 @@ function woocommerce_instamojo_init(){
                     'description' => __('Thank you page\'s url ', 'Instamojo'),
                     'placeholder' => _x('This will be your thank you url.', 'placeholder', 'woocommerce')
                 ),
+                'thank_you_msg' =>array(
+                    'title' => __('Thank You Message','instamojo'),
+                    'type' => 'text',
+                    'default' => 'Payment received, your item(s) are now being processed.',
+                    'desc_tip'=> "Message displayed to user after successful payment.",
+                    'placeholder' => _x('Payment received, your item(s) are now being processed.', 'placeholder', 'woocommerce')
+                ),
                 
             );
         }
@@ -198,7 +205,18 @@ function woocommerce_instamojo_init(){
             $custom_field = "data_". $this->custom_field;
             $custom_field1= strtolower($custom_field);
             $data_arr[$custom_field1] = $order_id;
-            ksort($data_arr, SORT_STRING | SORT_FLAG_CASE);
+
+            $ver = explode('.', phpversion());
+            $major = (int) $ver[0];
+            $minor = (int) $ver[1];
+
+            if($major >= 5 and $minor >= 4){
+                 ksort($data_arr, SORT_STRING | SORT_FLAG_CASE);
+            }
+            else{
+                 uksort($data_arr, 'strcasecmp');
+            }
+
             $str = hash_hmac("sha1", implode("|", $data_arr), $this->private_salt);
             $link= url_handler($this->payment_link) . "intent=buy&";
             $link.="data_readonly=data_email&data_readonly=data_amount&data_readonly=data_phone&data_readonly=data_name&data_readonly={$custom_field}&data_hidden={$custom_field}";
@@ -224,21 +242,25 @@ function woocommerce_instamojo_init(){
                 if($order_id != ''){
                     try{
                         $order = new WC_Order($order_id);
-                        $api = new Instamojo($this->api_key, $this->auth_token, $this->liveurl);
+                        $data = check_instamojo_payment_status($this->api_key, $this->auth_token, $payment_id);
                         try{
-                            $response = $api->paymentDetail($_REQUEST['payment_id']);
-
-                            if($response['custom_fields'][$this->custom_field]['value'] == $order_id){
-                                if($response['status'] == "Credit"){
-
+                            if($data['payment']['status'] == "Credit" && $data['payment']['custom_fields'][$this->custom_field]['value'] == $order_id){
                                     $order = new WC_Order($_SESSION['order_id']);
                                     $order->add_order_note('Payment was successfull.<br />Instamojo Payment ID: '. $payment_id);
                                     $order->payment_complete();
                                     unset($_SESSION['order_id']);
                                     $woocommerce->cart->empty_cart();
-                                    $msg['msg'] = "Payment received, your items(s) are now being processed.";
+                                    if(empty($this->thank_you_msg)){
+                                        $msg['msg'] = "Payment received, your item(s) are now being processed.";
+                                    }
+                                    else{
+                                        $msg['msg'] = $this->thank_you_msg;
+                                    }
                                     $msg['class'] = 'woocommerce-message';
-                                }
+                            }
+                            else{
+                                $msg['class'] = $data['payment']['status'];
+                                $msg['class'] = 'woocommerce-error';
                             }
                         }
                         catch (Exception $e){
@@ -259,11 +281,11 @@ function woocommerce_instamojo_init(){
                 $msg['class'] = 'woocommerce-error';
                 $msg['msg'] = "Invalid or missing parameters.";
             }
-            if(isset($this->redirect_url) && !$this->redirect_url){
-                $redirect_url = site_url();
+            if(empty($this->redirect_url)){
+                $this->redirect_url = site_url();
             }
-            if(substr($redirect_url, -1) != '/'){
-                $redirect_url .= '/';
+            if(substr($this->redirect_url, -1) != '/'){
+                $this->redirect_url .= '/' ;
             }
 
             $redirect_url = add_query_arg(array('msg' => urlencode($msg['msg']), 'class' => urlencode($msg['class'])), $this->redirect_url);
@@ -282,3 +304,32 @@ function woocommerce_instamojo_init(){
 
         add_filter('woocommerce_payment_gateways', 'woocommerce_add_instamojo_gateway' );
     }
+
+
+function check_instamojo_payment_status($api_key, $auth_token, $payment_id){
+
+    $cUrl = 'https://www.instamojo.com/api/1.1/payments/' . $payment_id;
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $cUrl);
+    curl_setopt($ch, CURLOPT_HEADER, FALSE);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-Api-Key:$api_key",
+                                               "X-Auth-Token:$auth_token"));
+    $response = curl_exec($ch);
+    $error_number = curl_errno($ch);
+    $error_message = curl_error($ch);
+    curl_close($ch);
+    $response_obj = json_decode($response, true);
+    if($response_obj['success'] == false) {
+        $message = json_encode($response_obj['message']);
+        return Array('payment' => Array('status' => $message));
+
+    }
+    if(empty($response_obj) || is_null($response_obj)){
+        return Array('payment' => Array('status' => 'No response from the server.'));
+    }
+    else{
+        return $response_obj;
+    }
+}

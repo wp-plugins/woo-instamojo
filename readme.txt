@@ -4,7 +4,7 @@ Donate link: https://www.instamojo.com
 Tags: commerce, e-commerce, ecommerce, online store, sell digital downloads, sell online, shop, store, wordpress ecommerce, WordPress shopping cart, sell event tickets, sell subscriptions, sell memberships, sell physical goods, payments, easy payments, payments button, widget
 Requires at least: 3.3
 Tested up to: 4.1.1
-Stable tag: 0.0.2
+Stable tag: 0.0.3
 License: MIT
 License URI: http://opensource.org/licenses/MIT
 
@@ -52,7 +52,17 @@ Once the plugin is installed and activated, you will be able to access a new men
 
   **"http://www.example.com/?wc-api=wc_instamojo"**
 
+10. The **"Thank You Message"** will be passed with your **"Thank you URL"** as a GET parameter named **"msg"** along with another parameter named "class". So, if your **"Thank You URL"** is say **"http://www.example.com/thank-you.php"** and **"Thank You Message"** is **"Payment received"** then we
+will call this page as **http://www.example.com/thank-you.php/?msg=Payment+received&class=woocommerce-message**.
+
+  The value of **class** here will be either **woocommerce-message** or **woocommerce-error** depending on whether payment was sucessful or not.
+
 == Changelog ==
+
+= 0.0.3 =
+* Fixed sorting issue for older PHP versions.
+* Added an option to provide custom "Thank You Message" to user in case of successful payment.
+* Plugin is much more smaller now.
 
 = 0.0.2 =
 * Various bug fixes related to name, email length.
