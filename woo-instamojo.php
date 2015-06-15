@@ -3,7 +3,7 @@
 Plugin Name: WooCommerce - Instamojo
 Plugin URI: http://www.instamojo.com
 Description: Instamojo Payment Gateway for WooCommerce. Instamojo lets you collect payments instantly.
-Version: 0.0.3
+Version: 0.0.4
 Author: Instamojo
 Email: support@instamojo.com
 Author URI: http://www.instamojo.com/
@@ -228,37 +228,39 @@ function woocommerce_instamojo_init(){
         /**
         * Check for valid Instamojo server callback
         **/
+
         function check_instamojo_response(){
 
             global $woocommerce;
             $msg = Array();
 
             if(isset($_REQUEST['status']) && isset($_REQUEST['payment_id'])){
-                $order_id = $_SESSION['order_id'];
                 $payment_id = $_REQUEST['payment_id'];
+                $data = check_instamojo_payment_status($this->api_key, $this->auth_token, $payment_id);
 
-                if($order_id != ''){
+                if(!empty($data)){
                     try{
                         $order = new WC_Order($order_id);
-                        $data = check_instamojo_payment_status($this->api_key, $this->auth_token, $payment_id);
                         try{
-                            if($data['payment']['status'] == "Credit" && $data['payment']['custom_fields'][$this->custom_field]['value'] == $order_id){
-                                    $order = new WC_Order($_SESSION['order_id']);
-                                    $order->add_order_note('Payment was successfull.<br />Instamojo Payment ID: '. $payment_id);
-                                    $order->payment_complete();
-                                    unset($_SESSION['order_id']);
-                                    $woocommerce->cart->empty_cart();
-                                    if(empty($this->thank_you_msg)){
-                                        $msg['msg'] = "Payment received, your item(s) are now being processed.";
-                                    }
-                                    else{
-                                        $msg['msg'] = $this->thank_you_msg;
-                                    }
-                                    $msg['class'] = 'woocommerce-message';
+                            if($data['payment']['status'] == "Credit"){
+                                $order_id = $data['payment']['custom_fields'][$this->custom_field]['value'];
+                                $order = new WC_Order($order_id);
+                                $order->add_order_note('Payment was successfull.<br />Instamojo Payment ID: '. $payment_id);
+                                $order->payment_complete();
+                                $order->add_order_note('Payment was successfull.<br />Instamojo Payment ID: '. $payment_id);
+                                $order->payment_complete();
+                                $woocommerce->cart->empty_cart();
+                                if(empty($this->thank_you_msg)){
+                                    $msg['msg'] = "Payment received, your item(s) are now being processed.";
+                                }
+                                else{
+                                    $msg['msg'] = $this->thank_you_msg;
+                                }
+                                $msg['class'] = 'woocommerce-message';
+
                             }
                             else{
-                                $msg['class'] = $data['payment']['status'];
-                                $msg['class'] = 'woocommerce-error';
+                                throw new Exception($data['payment']['status']);
                             }
                         }
                         catch (Exception $e){
@@ -290,6 +292,7 @@ function woocommerce_instamojo_init(){
             wp_redirect($redirect_url);
             exit;
         }
+        
         
         }
         /**
