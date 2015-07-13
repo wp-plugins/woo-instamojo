@@ -3,13 +3,14 @@
 Plugin Name: WooCommerce - Instamojo
 Plugin URI: http://www.instamojo.com
 Description: Instamojo Payment Gateway for WooCommerce. Instamojo lets you collect payments instantly.
-Version: 0.0.4
+Version: 0.0.5
 Author: Instamojo
 Email: support@instamojo.com
 Author URI: http://www.instamojo.com/
 License: GNU General Public License v3.0
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 */
+
 
 add_action('plugins_loaded', 'woocommerce_instamojo_init', 0);
 define('instamojo_imgdir', WP_PLUGIN_URL . "/" . plugin_basename(dirname(__FILE__)) . '/assets/img/');
@@ -192,7 +193,7 @@ function woocommerce_instamojo_init(){
 
             $billing_email =  substr($order->billing_email, 0, 75);
             $delivery_name = substr(trim($order->billing_first_name ." ".$order->billing_last_name), 0, 20);
-            $billing_tel = substr(trim($order->billing_phone, "+"), 0, 20);
+            $billing_tel = substr($order->billing_phone , 0, 20);
 
             $data_arr = Array();
             $data_arr["data_amount"] = $amount;
@@ -216,9 +217,10 @@ function woocommerce_instamojo_init(){
             }
 
             $str = hash_hmac("sha1", implode("|", $data_arr), $this->private_salt);
+            $encoded_number = urlencode($billing_tel);
             $link= url_handler($this->payment_link) . "intent=buy&";
             $link.="data_readonly=data_email&data_readonly=data_amount&data_readonly=data_phone&data_readonly=data_name&data_readonly={$custom_field}&data_hidden={$custom_field}";
-            $link.="&data_amount=$amount&data_name=$delivery_name&data_email=$billing_email&data_phone=$billing_tel&{$custom_field}=$order_id&data_sign=$str";
+            $link.="&data_amount=$amount&data_name=$delivery_name&data_email=$billing_email&data_phone=$encoded_number&{$custom_field}=$order_id&data_sign=$str";
 
             $_SESSION["order_id"] = $order_id;            return array(
                 'result' => 'success', 
@@ -240,7 +242,6 @@ function woocommerce_instamojo_init(){
 
                 if(!empty($data)){
                     try{
-                        $order = new WC_Order($order_id);
                         try{
                             if($data['payment']['status'] == "Credit"){
                                 $order_id = $data['payment']['custom_fields'][$this->custom_field]['value'];
@@ -293,6 +294,7 @@ function woocommerce_instamojo_init(){
             exit;
         }
         
+
         
         }
         /**
@@ -309,7 +311,7 @@ function woocommerce_instamojo_init(){
 
 function check_instamojo_payment_status($api_key, $auth_token, $payment_id){
 
-    $cUrl = 'https://www.instamojo.com/api/1.1/payments/' . $payment_id;
+    $cUrl = 'https://www.instamojo.com/api/1.1/payments/' . $payment_id . '/';
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $cUrl);
     curl_setopt($ch, CURLOPT_HEADER, FALSE);

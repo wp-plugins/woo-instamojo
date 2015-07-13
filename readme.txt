@@ -12,7 +12,7 @@ Sell & collect payments instantly for almost anything -- directly from your Word
 
 == Description ==
 
-We're on a mission to make mobile/desktop payments simple, accessible & fun— "Think Payments, Think Instamojo".
+We're on a mission to make mobile/desktop payments simple, accessible & fun -- "Think Payments, Think Instamojo".
 
 We help individuals & small businesses collect payments instantly through a unique short-link (e.g. - imojo.in/demo) which has powerful capabilities of analytics, CRM, payment processing, security, 100% seller-buyer protection, Appstore etc to help grow businesses on mobile/desktop.
 
@@ -58,6 +58,11 @@ will call this page as **http://www.example.com/thank-you.php/?msg=Payment+recei
   The value of **class** here will be either **woocommerce-message** or **woocommerce-error** depending on whether payment was sucessful or not.
 
 == Changelog ==
+
+= 0.0.5 =
+
+* Handle phone numbers with "+" properly.
+* Added '/' at the end of the payment detail URL to avoid an extra redirection.
 
 = 0.0.4 =
 * Fixed $_SESSION issue faced by users with non-persistent $_SESSION.
