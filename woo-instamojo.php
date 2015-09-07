@@ -3,7 +3,7 @@
 Plugin Name: WooCommerce - Instamojo
 Plugin URI: http://www.instamojo.com
 Description: Instamojo Payment Gateway for WooCommerce. Instamojo lets you collect payments instantly.
-Version: 0.0.5
+Version: 0.0.6
 Author: Instamojo
 Email: support@instamojo.com
 Author URI: http://www.instamojo.com/
@@ -243,21 +243,40 @@ function woocommerce_instamojo_init(){
                 if(!empty($data)){
                     try{
                         try{
-                            if($data['payment']['status'] == "Credit"){
+                            if($data['payment']['status'] == "Credit" || $data['payment']['status'] == "Failed" || $data['payment']['status'] == "Initiated"){
                                 $order_id = $data['payment']['custom_fields'][$this->custom_field]['value'];
                                 $order = new WC_Order($order_id);
-                                $order->add_order_note('Payment was successfull.<br />Instamojo Payment ID: '. $payment_id);
-                                $order->payment_complete();
-                                $order->add_order_note('Payment was successfull.<br />Instamojo Payment ID: '. $payment_id);
-                                $order->payment_complete();
+                                if($data['payment']['status'] == "Credit"){
+                                    $order->add_order_note('Payment was successfull.<br />Instamojo Payment ID: '. $payment_id);
+                                    $order->payment_complete();
+                                    if(empty($this->thank_you_msg)){
+                                        $msg['msg'] = "Payment received, your item(s) are now being processed.";
+                                    }
+                                    else{
+                                        $msg['msg'] = $this->thank_you_msg;
+                                    }
+                                    $msg['class'] = 'woocommerce-message';
+                                    if(empty($this->redirect_url)){
+                                        $this->redirect_url = site_url() . "/checkout/order-received/";
+                                        $redirect_url = $this->redirect_url . $order_id . '/?key=' . $order->order_key;
+                                        wp_redirect($redirect_url);
+                                        exit;
+                                    } 
+                                }
+                                else if($data['payment']['status'] == "Failed"){
+                                    $order -> update_status('failed');
+                                    $order -> add_order_note('Payment failed. <br />Instamojo Payment ID: '. $payment_id);
+                                    $msg['class'] = 'woocommerce-error';
+                                    $msg['msg'] = "Payment failed.";
+
+                                }
+                                else if($data['payment']['status'] == "Initiated"){
+                                    $order -> update_status('failed');
+                                    $order -> add_order_note('Payment was initiated but never completed for Instamojo Payment ID: '. $payment_id);
+                                    $msg['class'] = 'woocommerce-error';
+                                    $msg['msg'] = "Payment failed.";
+                                }
                                 $woocommerce->cart->empty_cart();
-                                if(empty($this->thank_you_msg)){
-                                    $msg['msg'] = "Payment received, your item(s) are now being processed.";
-                                }
-                                else{
-                                    $msg['msg'] = $this->thank_you_msg;
-                                }
-                                $msg['class'] = 'woocommerce-message';
 
                             }
                             else{
@@ -288,13 +307,11 @@ function woocommerce_instamojo_init(){
             if(substr($this->redirect_url, -1) != '/'){
                 $this->redirect_url .= '/' ;
             }
-
             $redirect_url = add_query_arg(array('msg' => urlencode($msg['msg']), 'class' => urlencode($msg['class'])), $this->redirect_url);
+
             wp_redirect($redirect_url);
             exit;
         }
-        
-
         
         }
         /**
